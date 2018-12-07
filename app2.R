@@ -11,8 +11,5 @@ library(shiny)
 source("./client.R")
 source("./server.R")
 
-print(sums(3,1))
-
 # Run the application 
-shinyApp(client, server)
-
+shinyApp(ui, server)

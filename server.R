@@ -1,61 +1,117 @@
 source("./controllers.R")
 
-
+library(shinyjs)
 
 
 server = function(input, output, session) {
 
-
-  fileToMatrix = reactive({
+  useShinyjs()
   
-    if (is.null(input$fileInput)) return(NULL)
-    fileToRead = input$fileInput
-    df = read.csv(input$fileInput$datapath, header=TRUE)
+  fileToMatrixPR = reactive({
+    if (is.null(input$fileInputPR)) return(NULL)
+    fileToRead = input$fileInputPR
+    df = read.csv(input$fileInputPR$datapath, header=TRUE)
     return(as.matrix(df, nrow = 1, ncol = 1))
-    
   })
   
-  
   output$fileContentsPR = renderTable({
-
-    if (is.null(fileToMatrix())) return(NULL)
-    
-    matrixOutput = fileToMatrix()
+    if (is.null(fileToMatrixPR())) return(NULL)
+    matrixOutput = fileToMatrixPR()
     updateSliderInput(session, 
-      "degreeN", 
+      "degreeNPR", 
       label = "Degree",
       min = 1, 
       max = length(matrixOutput[, 1]) - 1,
       step = 1,
       value=0
     )
-    
-    if(input$sorted) {
+    if(input$sortedXPR) {
       matrixOutput = matrixOutput[order(matrixOutput[,1]), ]
     }
-    
-    if(!input$dispAll)  {
-      # print(matrixOutput)
+    if(!input$dispAllPR)  {
       return(head(matrixOutput))
     } else {
       return(matrixOutput)
     }
   })
   
+  getFunction = eventReactive(input$solveButtonPR, {
+
+    if (is.null(fileToMatrixPR())) return(NULL)
+    matrixHandler = fileToMatrixPR()
+    result = PolynomialRegression(matrixHandler[,1], matrixHandler[,2], input$degreeNPR)
+    show("funcLabel")
+    show("xInputPR")
+    show("solveXPR")
+    return(result)
+
+  })
+  
+  getFunctionText = reactive({
+    
+    if(is.null(getFunction())) return(NULL)
+    functionText = getFunction()$textForm
+    return(functionText)
+    
+  })
+    
+  output$answerFunctionPR = renderText({
+    getFunctionText()
+  })
 
   
-  answerPR = eventReactive(input$solveButton, {
+  solveForX = reactive({
     
-    if (is.null(fileToMatrix())) return(NULL)
-    matrixHandler = fileToMatrix()
-    result = PolynomialRegression(matrixHandler[,1], matrixHandler[,2], input$degreeN)
-    return(result)
+    if(is.null(getFunction())) return(NULL)
+    return(getFunction()$functionForm(input$xInputPR))
     
   })
   
-  output$answerFunctionPR = renderText({
-    answerPR()
+  output$answerGivenX = eventReactive(input$solveXPR, {
+    show("ansLabel")
+    solveForX()
   })
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  fileToMatrixQSI = reactive({
+    if (is.null(input$fileInputQSI)) return(NULL)
+    fileToRead = input$fileInputQSI
+    df = read.csv(input$fileInputQSI$datapath, header=TRUE)
+    return(as.matrix(df, nrow = 1, ncol = 1))
+  })
+  
+  output$fileContentsQSI = renderTable({
+    if (is.null(fileToMatrixQSI())) return(NULL)
+    matrixOutput = fileToMatrixQSI()
+    updateSliderInput(session, 
+      "degreeNQSI", 
+      label = "Order",
+      min = 1, 
+      max = length(matrixOutput[, 1]) - 1,
+      step = 1,
+      value=0
+    )
+    if(input$sortedXQSI) {
+      matrixOutput = matrixOutput[order(matrixOutput[,1]), ]
+    }
+    if(!input$dispAllQSI)  {
+      return(head(matrixOutput))
+    } else {
+      return(matrixOutput)
+    }
+  })
+  
+  
   
 }
 

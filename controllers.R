@@ -96,6 +96,14 @@ GaussJordanElimination = function(matrixToReceive) {
   
 }
 
+NaiveGJE = function(matrixToReceive) {
+  
+  
+  
+  
+  
+}
+
 setLinearSystem = function(dataSet, degreeN) {
   
   # == The size of the linear system should be degreeN+1 x degreeN+2 == #
@@ -175,9 +183,9 @@ PolynomialRegression = function(independentVector, dependentVector, degreeN) {
   }
   
   functionForm = eval(parse(text = textForm))
-  # toReturn = list(coefficients = coefficients, functionForm = functionForm)
+  toReturn = list(coefficients = coefficients, functionForm = functionForm, textForm = textForm)
   # print(toReturn)
-  return(textForm)
+  return(toReturn)
   
 }
 

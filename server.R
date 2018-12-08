@@ -1,26 +1,28 @@
 source("./controllers.R")
 
+
+
+
 server = function(input, output, session) {
 
-  matrixOutput = NULL
+
+  fileToMatrix = reactive({
   
-  output$fileContents = renderTable({
-
-    req(input$fileInput)
-
-    tryCatch(
-      { df = read.csv(input$fileInput$datapath, header=TRUE) },
-      error = function(e) {
-        # return a safeError if a parsing error occurs
-        stop(safeError(e))
-      }
-    )
+    if (is.null(input$fileInput)) return(NULL)
+    fileToRead = input$fileInput
+    df = read.csv(input$fileInput$datapath, header=TRUE)
+    return(as.matrix(df, nrow = 1, ncol = 1))
     
-    # Translate to matrix
-    matrixOutput = as.matrix(df, nrow = 1, ncol = 1)
-    print("wat")
+  })
+  
+  
+  output$fileContentsPR = renderTable({
+
+    if (is.null(fileToMatrix())) return(NULL)
+    
+    matrixOutput = fileToMatrix()
     updateSliderInput(session, 
-      "integer", 
+      "degreeN", 
       label = "Degree",
       min = 1, 
       max = length(matrixOutput[, 1]) - 1,
@@ -40,6 +42,20 @@ server = function(input, output, session) {
     }
   })
   
+
+  
+  answerPR = eventReactive(input$solveButton, {
+    
+    if (is.null(fileToMatrix())) return(NULL)
+    matrixHandler = fileToMatrix()
+    result = PolynomialRegression(matrixHandler[,1], matrixHandler[,2], input$degreeN)
+    return(result)
+    
+  })
+  
+  output$answerFunctionPR = renderText({
+    answerPR()
+  })
   
 }
 

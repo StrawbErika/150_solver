@@ -17,31 +17,34 @@ ui = fluidPage(
           ),
           # Choose to display all data
           checkboxInput("dispAll", "Display All", FALSE),
-          checkboxInput("sorted", "Sorted by x", FALSE),
-          
+          checkboxInput("sorted", "Sort by x", FALSE),
+          br(),
           sliderInput(
-            "integer", 
+            "degreeN", 
             label = "Degree",
             min = 1, 
             max = 10,
             step = 1,
             pre="n = ",
-            value=0
-          )
+            value = 0
+          ),
+          actionButton("solveButton", "SOLVE", style="background-color:#f44e42; color:white"),
+          hr(),
+          p("Function: "),
+          verbatimTextOutput("answerFunctionPR")
+          
         ),
       
         mainPanel(
-          tableOutput("fileContents")
+          tableOutput("fileContentsPR")
         )
       ),
     
     
       # ================= QSI ================= #
       tabPanel(div("Quadratic Spline Interpolation", style="color: blue"),
-        titlePanel(div("Quadratic Spline Interpolation", style="color: blue")),
-          sidebarPanel(
-            
-          )
+        titlePanel(div("Quadratic Spline Interpolation", style="color: blue"))
+
       )
     ),
   

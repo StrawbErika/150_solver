@@ -71,7 +71,7 @@ GaussJordanElimination = function(matrixToReceive) {
       }
     }
     
-    print(currentLinearSystem)
+    # print(currentLinearSystem)
     currentLinearSystem[i, ] = currentLinearSystem[i, ]  / currentLinearSystem[i, i]
     
     for (j in seq(1, rowCount)) {
@@ -84,7 +84,7 @@ GaussJordanElimination = function(matrixToReceive) {
       
     }
     
-    print(currentLinearSystem)
+    # print(currentLinearSystem)
   }
   
   
@@ -154,32 +154,34 @@ PolynomialRegression = function(independentVector, dependentVector, degreeN) {
   
   # Matrix form of the two vectors
   matrixForm = translateToMatrix(independentVector, dependentVector)
+  # print(matrixForm)
   systemOfEquation = setLinearSystem(matrixForm, degreeN)
   # print(systemOfEquation)
   
   # The output after Gauss methods
   gaussOutput = GaussJordanElimination(systemOfEquation)
   coefficients = gaussOutput$solutionSet
-  print(gaussOutput)
+  # print(gaussOutput)
   
   # Setup the function form
-  functionForm = "function (x) "
+  textForm = "function (x) "
   for(i in seq(length(coefficients), 1, -1)) {
     if (i == 1) 
-      functionForm = paste(functionForm, coefficients[i], sep = "")
+      textForm = paste(textForm, coefficients[i], sep = "")
     else if (i == 2) 
-      functionForm = paste(functionForm, coefficients[i], " * x", " + ", sep = "")
+      textForm = paste(textForm, coefficients[i], " * x", " + ", sep = "")
     else
-      functionForm = paste(functionForm, coefficients[i], " * x^", i - 1, " + ", sep = "")
+      textForm = paste(textForm, coefficients[i], " * x^", i - 1, " + ", sep = "")
   }
   
-  functionForm = eval(parse(text = functionForm))
-  toReturn = list(coefficients = coefficients, functionForm = functionForm)
+  functionForm = eval(parse(text = textForm))
+  # toReturn = list(coefficients = coefficients, functionForm = functionForm)
   # print(toReturn)
-  return(toReturn)
+  return(textForm)
   
 }
 
 independentVector = c(50, 50, 50, 70, 70, 70, 80, 80, 80, 90, 90, 90, 100, 100, 100)
 dependentVector = c(3.3, 2.8, 2.9, 2.3, 2.6, 2.1, 2.5, 2.9, 2.4, 3.0, 3.1, 2.8, 3.3, 3.5, 3.0)
-# result = PolynomialRegression(independentVector, dependentVector, 3)
+result = PolynomialRegression(independentVector, dependentVector, 5)
+# print(result)

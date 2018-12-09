@@ -24,6 +24,7 @@ overflow-y:scroll; max-height: 100px; background: ghostwhite;}")),
           # Choose to display all data
           checkboxInput("dispAllPR", "Display All", FALSE),
           checkboxInput("sortedXPR", "Sort by x", FALSE),
+          checkboxInput("headerCheckPR", "File has header", FALSE),
           br(),
           sliderInput(
             "degreeNPR", 
@@ -72,29 +73,32 @@ overflow-y:scroll; max-height: 100px; background: ghostwhite;}")),
           ),
           checkboxInput("dispAllQSI", "Display All", FALSE),
           checkboxInput("sortedXQSI", "Sort by x", FALSE),
+          checkboxInput("headerCheckQSI", "File has header", FALSE),
           br(),
-          sliderInput(
-            "degreeNQSI", 
-            label = "Order",
-            min = 1, 
-            max = 10,
-            step = 1,
-            pre="th Order = ",
-            value = 0
-          ),
-          actionButton("solveButtonQSI", "SOLVE", style="background-color:#429ef4; color:white"),
+          actionButton("solveButtonQSI", "Generate Functions", style="background-color:#429ef4; color:white"),
           hr(),
-          p("Function: "),
-          verbatimTextOutput("answerFunctionQSI")
+          hidden(
+            numericInput("xInputQSI", "Solve for X", 0),
+            actionButton("solveXQSI", "SOLVE", style="background-color:#429ef4; color:white")
+          ),
+          hr(),
+          hidden(
+            div(id="ansLabelQSI", "f(x): ")
+          ),
+          verbatimTextOutput("answerGivenXQSI")
         ),
-        
+      
         mainPanel(
-          tableOutput("fileContentsQSI")
+          tableOutput("fileContentsQSI"),
+          tableOutput("generatedFunctions")
         )
       )
     ),
+    
+    # =============== SIMPLEX SOLVER =============== #
     tabPanel("Simplex Solver"
     
+      
     )
   )
 )

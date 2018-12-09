@@ -335,7 +335,113 @@ QSISolver = function(independentVector, dependentVector, x) {
   return(corFunction(x))
 }
 
+initializeMatrix = function() {
+  toRet = c(-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -180,
+            0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, -80,
+            0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, -200,
+            0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -160,
+            0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -220,
+            1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 310,
+            0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 260,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 280,
+            10, 8, 6, 5, 4, 6, 5, 4, 3, 6, 3, 4, 5, 5, 9, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0)
+  
+  retColNames = c("DEN1", "DEN2", "DEN3", "DEN4", "DEN5", "PHO1", "PHO2", "PHO3", "PHO4", "PHO5", "DAL1", "DAL2", "DAL3", "DAL4", "DAL5", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "Z", "RHS")
+  
+  retRowNames = c("S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "Z")
+# 
+  matForm = matrix(toRet, nrow=9, ncol=25, byrow=TRUE)
+  rownames(matForm) = retRowNames
+  colnames(matForm) = retColNames
+  # print(matForm)
+  return(matForm)
+}
 
+SimplexMin = function(matrixInput) {
+  
+  masterM = initializeMatrix();
+  masterLocalCopy = masterM
+  # print(masterLocalCopy)
+  masterMRows = length(masterM[,1])
+  masterMCols = length(masterM[1,])
+  
+  # Phase 1 - until no negative in RHS, except the last row
+  while(sum(masterM[-masterMRows,][,masterMCols] < 0) > 0) {
+    
+    # Find the least value in RHS, excluding the last row
+    pivotRowIndex = which.min(masterM[-masterMRows,][,masterMCols])
+    maxNegInRHS = masterM[pivotRowIndex, length(masterM[1,])]
+    # cat("Pivot row index:", pivotRowIndex, "\nPivot row element:", maxNegInRHS, "\n")
+    
+    # Find the least value in leastValRHS row
+    rowToDivide = masterM[, -length(masterM[1,])]
+    rowToDivide = rowToDivide[pivotRowIndex, ]
+    pivotColumnIndex = which.max(rowToDivide/maxNegInRHS)
+    pivotElement = masterM[pivotRowIndex, pivotColumnIndex]
+    # cat("Pivot element @", pivotRowIndex, pivotColumnIndex, ":", pivotElement, "\n")
+    
+    # Normalize the row
+    masterM[pivotRowIndex, ] = masterM[pivotRowIndex, ]/pivotElement
+    # pivotElement = masterM[pivotRowIndex, pivotColumnIndex]
+    # cat("New pivot element: ", pivotElement, "\n")
+  
+    for(i in 1:length(masterM[,1])) {
+      if(i == pivotRowIndex)
+        next
+      
+      normalizedRow = masterM[pivotRowIndex, ] * masterM[i, pivotColumnIndex]
+      masterM[i, ] = masterM[i, ] - normalizedRow
+      
+    }
+  }
+  
+  
+  # Phase 2 - while there is a negative on the last row, except on last column.
+  while(sum(masterM[,-masterMCols][masterMRows,] < 0) > 0 ) {
+
+
+    # Find the least value in the last row, except on RHS
+    pivotColIndex = which.min(masterM[,-masterMCols][masterMRows,])
+    maxNegInLast = masterM[masterMRows, pivotColIndex]
+
+    # Find row index of pivot element
+    pivotRowIndex = which.max(masterM[,pivotColIndex]/masterM[,masterMCols])
+    pivotElement = masterM[pivotRowIndex, pivotColIndex]
+    # cat("Row:", pivotRowIndex, "Col:", pivotColIndex, "\n")
+    
+    # Normalize
+    masterM[pivotRowIndex, ] = masterM[pivotRowIndex, ]/pivotElement
+    
+    for(i in 1:masterMRows) {
+      if(i == pivotRowIndex)
+        next
+      normalizedRow = masterM[pivotRowIndex, ] * masterM[i, pivotColIndex]
+      masterM[i, ] = masterM[i, ] - normalizedRow
+    }
+  }
+
+  
+  print(masterM)
+  
+  # Extract values from each column
+  solutionVector = c()
+  
+  # Iterate through all columns minus slack variables
+  for(i in 1: (masterMCols - masterMRows - 1)) {
+    
+    # Add to solution vector when there is only one 1 in column.
+    if(sum(masterM[,i] == 1) == 1) {
+      solutionRow = match(c(1), masterM[,i])
+      solutionVector = c(solutionVector, masterM[solutionRow, masterMCols])
+    } else {
+      solutionVector = c(solutionVector, 0)
+    }
+      
+  }
+  
+  print(solutionVector)
+  
+}
 
 
 

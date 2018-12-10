@@ -336,34 +336,43 @@ QSISolver = function(independentVector, dependentVector, x) {
 }
 
 initializeMatrix = function() {
-  toRet = c(-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -180,
-            0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, -80,
-            0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, -200,
-            0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -160,
-            0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -220,
-            1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 310,
-            0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 260,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 280,
-            10, 8, 6, 5, 4, 6, 5, 4, 3, 6, 3, 4, 5, 5, 9, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0)
+  toRet = c(-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+            1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+            0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0)
   
-  retColNames = c("DEN1", "DEN2", "DEN3", "DEN4", "DEN5", "PHO1", "PHO2", "PHO3", "PHO4", "PHO5", "DAL1", "DAL2", "DAL3", "DAL4", "DAL5", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "Z", "RHS")
-  
-  retRowNames = c("S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "Z")
-# 
-  matForm = matrix(toRet, nrow=9, ncol=25, byrow=TRUE)
-  rownames(matForm) = retRowNames
-  colnames(matForm) = retColNames
-  # print(matForm)
+  matForm = matrix(toRet, nrow=8, ncol=24, byrow=TRUE)
   return(matForm)
 }
 
-SimplexMin = function(matrixInput) {
+SimplexMin = function(rhs, lastRow) {
   
   masterM = initializeMatrix();
+
+  retColNames = c("x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "Z", "RHS")
+  retRowNames = c("S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "Z")
+  
+  masterM = rbind(masterM, lastRow)
+  masterM = cbind(masterM, rhs)
+  rownames(masterM) = retRowNames
+  colnames(masterM) = retColNames
+
+  # print(masterM)
+
   masterLocalCopy = masterM
   # print(masterLocalCopy)
   masterMRows = length(masterM[,1])
   masterMCols = length(masterM[1,])
+  
+  iterationList = list()
+  stateCounter = 1
+  
+  iterationList[[stateCounter]] = masterM
+  stateCounter = stateCounter + 1
   
   # Phase 1 - until no negative in RHS, except the last row
   while(sum(masterM[-masterMRows,][,masterMCols] < 0) > 0) {
@@ -385,12 +394,16 @@ SimplexMin = function(matrixInput) {
     # pivotElement = masterM[pivotRowIndex, pivotColumnIndex]
     # cat("New pivot element: ", pivotElement, "\n")
   
+    iterationList[[stateCounter]] = masterM
+    stateCounter = stateCounter + 1
+    
     for(i in 1:length(masterM[,1])) {
       if(i == pivotRowIndex)
         next
       
       normalizedRow = masterM[pivotRowIndex, ] * masterM[i, pivotColumnIndex]
       masterM[i, ] = masterM[i, ] - normalizedRow
+      
       
     }
   }
@@ -408,21 +421,25 @@ SimplexMin = function(matrixInput) {
     pivotRowIndex = which.max(masterM[,pivotColIndex]/masterM[,masterMCols])
     pivotElement = masterM[pivotRowIndex, pivotColIndex]
     # cat("Row:", pivotRowIndex, "Col:", pivotColIndex, "\n")
-    
+
     # Normalize
     masterM[pivotRowIndex, ] = masterM[pivotRowIndex, ]/pivotElement
+    
+    iterationList[[stateCounter]] = masterM
+    stateCounter = stateCounter + 1
     
     for(i in 1:masterMRows) {
       if(i == pivotRowIndex)
         next
       normalizedRow = masterM[pivotRowIndex, ] * masterM[i, pivotColIndex]
       masterM[i, ] = masterM[i, ] - normalizedRow
+
     }
   }
 
-  
-  print(masterM)
-  
+  # Final state
+  iterationList[[stateCounter]] = masterM
+
   # Extract values from each column
   solutionVector = c()
   
@@ -436,10 +453,44 @@ SimplexMin = function(matrixInput) {
     } else {
       solutionVector = c(solutionVector, 0)
     }
-      
   }
   
-  print(solutionVector)
+  
+  totalEachPlant = c()
+  totalEachState = c()
+  
+  # Each plant
+  holder = 0
+  for(i in 1:5) {
+    holder = holder + solutionVector[i]
+  }
+  totalEachPlant = c(totalEachPlant, holder)
+  
+  holder = 0
+  for(i in 6:10) {
+    holder = holder + solutionVector[i]
+  }
+  totalEachPlant = c(totalEachPlant, holder)
+  
+  holder = 0
+  for(i in 11:15) {
+    holder = holder + solutionVector[i]
+  }
+  totalEachPlant = c(totalEachPlant, holder)  
+  
+  # Each state
+  for(i in 1:5) {
+    count = 1
+    holder = 0
+    while(count <= 3) {
+      holder = holder + solutionVector[i]
+      i = i+5
+      count = count+1
+    }
+    totalEachState = c(totalEachState, holder)
+  }
+  
+  return(list(finalMatrix = masterM, solutionVector = solutionVector, totalEachPlant = totalEachPlant, totalEachState = totalEachState, stateList=iterationList, stateCounter=stateCounter))
   
 }
 
@@ -460,3 +511,5 @@ SimplexMin = function(matrixInput) {
 # result = QSISolver(independentVector, dependentVector, 5)
 # result = QSI(independentVector, dependentVector)
 # print(result)
+
+# initializeMatrix()
